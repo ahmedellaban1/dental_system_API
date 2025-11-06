@@ -320,3 +320,299 @@ class CanCancelBooking(permissions.BasePermission):
             return obj.status in ['pending', 'confirmed']
 
         return False
+
+
+# ======================== Billing Permissions ========================
+
+class CanCreateBill(permissions.BasePermission):
+    """
+    Permission: Only staff can create bills
+    """
+
+    def has_permission(self, request, view):
+        if request.method == 'POST':
+            return request.user.is_authenticated and request.user.type in ['admin', 'receptionist']
+        return True
+
+
+class CanViewBill(permissions.BasePermission):
+    """
+    Permission: Staff can view all bills, Patients can view their own bills
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        # Staff can view all bills
+        if request.user.type in ['admin', 'receptionist']:
+            return True
+
+        # Patients can view their own bills
+        if request.user.type == 'patient':
+            return obj.patient == request.user
+
+        return False
+
+
+class CanUpdateBill(permissions.BasePermission):
+    """
+    Permission: Only staff can update bills
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type in ['admin', 'receptionist']
+
+    def has_object_permission(self, request, view, obj):
+        return request.user.type in ['admin', 'receptionist']
+
+
+class CanProcessPayment(permissions.BasePermission):
+    """
+    Permission: Only staff can process payments
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type in ['admin', 'receptionist']
+
+
+# ======================== Medical Records Permissions ========================
+
+class CanManageCommonDiseases(permissions.BasePermission):
+    """
+    Permission: Only admin and doctors can manage common diseases library
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_authenticated
+        return request.user.is_authenticated and request.user.type in ['admin', 'doctor']
+
+
+class CanViewMedicalRecord(permissions.BasePermission):
+    """
+    Permission: Staff and doctors can view all records, patients can view own
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        # Staff can view all records
+        if request.user.type in ['admin', 'receptionist', 'doctor']:
+            return True
+
+        # Patients can view their own records
+        if request.user.type == 'patient':
+            return obj.patient == request.user
+
+        return False
+
+
+class CanManageMedicalRecord(permissions.BasePermission):
+    """
+    Permission: Only doctors and staff can create/update medical records
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type in ['admin', 'doctor', 'receptionist']
+
+    def has_object_permission(self, request, view, obj):
+        # Admin can manage all records
+        if request.user.type == 'admin':
+            return True
+
+        # Doctors can manage records
+        if request.user.type == 'doctor':
+            return True
+
+        # Receptionists can view but limited updates
+        if request.user.type == 'receptionist':
+            return request.method in permissions.SAFE_METHODS
+
+        return False
+
+
+# ======================== Operations Permissions ========================
+
+class CanViewOperation(permissions.BasePermission):
+    """
+    Permission: Staff and doctors can view all operations, patients can view their own
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        # Staff can view all operations
+        if request.user.type in ['admin', 'receptionist']:
+            return True
+
+        # Doctors can view their operations
+        if request.user.type == 'doctor':
+            return obj.doctor == request.user
+
+        # Patients can view their operations
+        if request.user.type == 'patient':
+            return obj.patient == request.user
+
+        return False
+
+
+class CanManageOperation(permissions.BasePermission):
+    """
+    Permission: Doctors and admin can create/update operations
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type in ['admin', 'doctor']
+
+    def has_object_permission(self, request, view, obj):
+        # Admin can manage all operations
+        if request.user.type == 'admin':
+            return True
+
+        # Doctors can manage their own operations
+        if request.user.type == 'doctor':
+            return obj.doctor == request.user
+
+        return False
+
+
+class CanManageOperationMedia(permissions.BasePermission):
+    """
+    Permission: Doctors and admin can manage operation media
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type in ['admin', 'doctor']
+
+    def has_object_permission(self, request, view, obj):
+        # Admin can manage all media
+        if request.user.type == 'admin':
+            return True
+
+        # Doctors can manage media for their operations
+        if request.user.type == 'doctor':
+            return obj.operation.doctor == request.user
+
+        return False
+
+
+# ======================== Payroll Permissions ========================
+
+class CanManageSalary(permissions.BasePermission):
+    """
+    Permission: Only admin can manage salaries
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            # Receptionists can view their own salaries
+            if request.user.type == 'receptionist':
+                return True
+            # Admin can view all
+            return request.user.is_authenticated and request.user.type == 'admin'
+        # Only admin can create/update/delete
+        return request.user.is_authenticated and request.user.type == 'admin'
+
+    def has_object_permission(self, request, view, obj):
+        # Admin can do everything
+        if request.user.type == 'admin':
+            return True
+
+        # Receptionists can only view their own salaries
+        if request.user.type == 'receptionist':
+            return request.method in permissions.SAFE_METHODS and obj.receptionist == request.user
+
+        return False
+
+
+class CanViewAdvance(permissions.BasePermission):
+    """
+    Permission: Admin can view all, receptionists can view own
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type in ['admin', 'receptionist']
+
+    def has_object_permission(self, request, view, obj):
+        # Admin can view all
+        if request.user.type == 'admin':
+            return True
+
+        # Receptionists can view their own advances
+        if request.user.type == 'receptionist':
+            return obj.receptionist == request.user
+
+        return False
+
+
+class CanRequestAdvance(permissions.BasePermission):
+    """
+    Permission: Only receptionists can request advances
+    """
+
+    def has_permission(self, request, view):
+        if request.method == 'POST':
+            return request.user.is_authenticated and request.user.type == 'receptionist'
+        return True
+
+
+class CanApproveAdvance(permissions.BasePermission):
+    """
+    Permission: Only admin can approve/reject advances
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type == 'admin'
+
+
+# ======================== Pharmacy Permissions ========================
+
+class CanManageMedicineLibrary(permissions.BasePermission):
+    """
+    Permission: Admin and doctors can manage medicine library
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_authenticated
+        return request.user.is_authenticated and request.user.type in ['admin', 'doctor']
+
+
+class CanViewPrescription(permissions.BasePermission):
+    """
+    Permission: Staff/doctors can view all, patients can view own
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        # Staff can view all
+        if request.user.type in ['admin', 'receptionist']:
+            return True
+
+        # Doctors can view their prescriptions
+        if request.user.type == 'doctor':
+            return obj.doctor == request.user
+
+        # Patients can view their prescriptions
+        if request.user.type == 'patient':
+            return obj.patient == request.user
+
+        return False
+
+
+class CanManagePrescription(permissions.BasePermission):
+    """
+    Permission: Only doctors can create/update prescriptions
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.type == 'doctor'
+
+    def has_object_permission(self, request, view, obj):
+        # Doctors can only manage their own prescriptions
+        return obj.doctor == request.user

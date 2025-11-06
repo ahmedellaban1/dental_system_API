@@ -35,21 +35,21 @@ urlpatterns = [
 
     # Appointments
     path('api/appointments/', include('appointments.urls')),
-    #
-    # # Medical Records
-    # path('api/medical/', include('medical.urls')),
-    #
-    # # Operations
-    # path('api/operations/', include('operations.urls')),
-    #
-    # # Billing & Invoices
-    # path('api/billing/', include('billing.urls')),
-    #
-    # # Payroll & Salaries
-    # path('api/payroll/', include('payroll.urls')),
-    #
-    # # Pharmacy & Medicines
-    # path('api/pharmacy/', include('pharmacy.urls')),
+
+    # Medical Records
+    path('api/medical/', include('medical.urls')),
+
+    # Operations
+    path('api/operations/', include('operations.urls')),
+
+    # Billing & Invoices
+    path('api/billing/', include('billing.urls')),
+
+    # Payroll & Salaries
+    path('api/payroll/', include('payroll.urls')),
+
+    # Pharmacy & Medicines
+    path('api/pharmacy/', include('pharmacy.urls')),
 ]
 
 # ======================== Debug Toolbar (Development Only) ========================
